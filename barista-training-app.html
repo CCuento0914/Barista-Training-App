@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Barista · Recipe Study Guide</title>
+    <style>
+      :root {
+        --bg: #f7f5ef;
+        --paper: #fffefa;
+        --ink: #2b332e;
+        --muted: #65706a;
+        --line: #e0e4db;
+        --accent: #6d8067;
+        --accent-dark: #435b48;
+        --pale: #eaf0e7;
+        --rose: #f7e9e5;
+        --bad: #9a4f47;
+        --good: #356e50;
+        --shadow: 0 10px 30px rgba(35,47,37,.06);
+        --header-height: 67px;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+      button,input,select { font: inherit; }
+      button { cursor: pointer; }
+      a { color: inherit; }
+      .wrap { width: min(1120px,calc(100% - 36px)); margin: auto; }
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(255,254,250,.96);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line);
+      }
+      .top-inner { min-height: 67px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+      .brand { font-weight: 800; letter-spacing: -.025em; text-decoration: none; font-size: 1.1rem; }
+      .brand small { display: block; font-weight: 500; font-size: .72rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+      .topnav { display: flex; gap: 8px; }
+      .topnav a,.jump a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        border: 1px solid var(--line);
+        background: var(--paper);
+        border-radius: 999px;
+        padding: 7px 14px;
+        font-size: .9rem;
+        font-weight: 650;
+      }
+      .topnav a:hover,.jump a:hover { background: var(--pale); border-color: #b6c6b6; }
+      main { padding-bottom: 75px; }
+      main.wrap { width: min(1120px, calc(100% - 102px)); margin-right: max(84px, calc((100% - 1120px) / 2)); }
+      section { scroll-margin-top: 90px; }
+      .hero { padding: 62px 0 35px; }
+      .eyebrow { text-transform: uppercase; letter-spacing: .16em; color: var(--accent-dark); font-size: .76rem; font-weight: 800; }
+      .hero h1 { font-size: clamp(2.25rem,5vw,4.35rem); line-height: 1.08; letter-spacing: -.055em; max-width: 800px; margin: 10px 0 16px; }
+      .hero p { max-width: 700px; color: var(--muted); font-size: 1.1rem; margin: 0; }
+      .summary { display: flex; gap: 10px; flex-wrap: wrap; margin: 26px 0; }
+      .pill { background: var(--pale); color: var(--accent-dark); border-radius: 999px; padding: 7px 12px; font-size: .82rem; font-weight: 750; }
+      .finder { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 18px 0 24px; }
+      .finder input {
+        min-width: 260px;
+        flex: 1;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: var(--paper);
+        padding: 12px 14px;
+        outline-color: var(--accent);
+      }
+      .jump {
+        position: fixed;
+        right: max(12px, calc((100vw - 1120px) / 2 - 70px));
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        width: 54px;
+        max-height: calc(100dvh - 180px);
+        overflow-y: auto;
+        padding: 7px;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: var(--paper);
+        box-shadow: var(--shadow);
+      }
+      .jump a { width: 38px; height: 38px; flex-shrink: 0; padding: 0; }
+      .jump a:focus-visible { outline: 2px solid var(--accent-dark); outline-offset: -2px; }
+      .section-card {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 23px;
+        box-shadow: var(--shadow);
+        padding: 27px;
+        margin: 20px 0;
+      }
+      .section-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 15px; border-bottom: 1px solid var(--line); padding-bottom: 13px; }
+      .section-head h2 { font-size: 1.75rem; line-height: 1; margin: 0; letter-spacing: -.04em; }
+      .section-head span { color: var(--muted); font-size: .88rem; }
+      .drinks { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; }
+      .drink { perspective: 1200px; cursor: pointer; border-radius: 16px; }
+      .drink:focus-visible { outline: 3px solid var(--accent-dark); outline-offset: 4px; }
+      .flashcard-inner { display: grid; min-height: 240px; transform-style: preserve-3d; transition: transform .35s ease; }
+      .drink.is-flipped .flashcard-inner { transform: rotateY(180deg); }
+      .flashcard-face {
+        grid-area: 1 / 1;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px;
+        background: #fff;
+        backface-visibility: hidden;
+        overflow-wrap: anywhere;
+      }
+      .flashcard-front { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+      .flashcard-front .code { margin: 0 0 14px; padding: 6px 12px; }
+      .flashcard-back { transform: rotateY(180deg); visibility: hidden; }
+      .drink.is-flipped .flashcard-front { visibility: hidden; }
+      .drink.is-flipped .flashcard-back { visibility: visible; }
+      .flip-hint { color: var(--muted); font-size: .8rem; margin: 12px 0 0; }
+      @media (prefers-reduced-motion: reduce) {
+        .flashcard-inner { transition: none; }
+      }
+      .drink h3 { font-size: 1.04rem; line-height: 1.28; margin: 0 0 13px; }
+      .code {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--pale);
+        color: var(--accent-dark);
+        border-radius: 8px;
+        padding: 2px 8px;
+        margin-right: 8px;
+        font-size: .82rem;
+        font-weight: 850;
+        letter-spacing: .04em;
+        vertical-align: 2px;
+      }
+      .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+      .steps li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; margin: 9px 0; color: #3d4940; font-size: .89rem; }
+      .steps li:before {
+        counter-increment: step;
+        content: counter(step);
+        display: grid;
+        place-items: center;
+        width: 21px;
+        height: 21px;
+        border-radius: 50%;
+        background: #e9eee7;
+        color: var(--accent-dark);
+        font-size: .72rem;
+        font-weight: 850;
+      }
+      .step-label { font-weight: 750; color: var(--ink); }
+      .method { color: var(--accent-dark); font-weight: 750; }
+      .note { font-size: .8rem; color: var(--muted); margin: 10px 0 0; }
+      .empty { padding: 20px; color: var(--muted); }
+      #quiz { padding-top: 40px; }
+      .quiz-shell {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: clamp(20px,4vw,40px);
+      }
+      .quiz-shell h2 { font-size: 2rem; letter-spacing: -.04em; margin: 4px 0 6px; }
+      .quiz-shell>p { color: var(--muted); margin: 0 0 20px; }
+      .mode-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0; }
+      .mode-row button,.primary,.secondary,.add {
+        border-radius: 11px;
+        padding: 10px 15px;
+        border: 1px solid var(--line);
+        background: #fff;
+        font-weight: 750;
+      }
+      .mode-row button[aria-pressed=true],.primary { background: var(--accent-dark); border-color: var(--accent-dark); color: #fff; }
+      .secondary:hover,.add:hover { background: var(--pale); }
+      .primary:hover { background: #344a38; }
+      .quiz-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        border-top: 1px solid var(--line);
+        padding-top: 22px;
+        margin-top: 20px;
+        color: var(--muted);
+        font-size: .88rem;
+      }
+      .prompt { margin: 12px 0 18px; font-size: 1.35rem; line-height: 1.3; font-weight: 800; letter-spacing: -.025em; }
+      .question { padding: 16px; border-radius: 14px; background: #f5f7f2; margin: 16px 0; }
+      .question h4 { margin: 0 0 12px; }
+      .choice-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+      .choice { display: flex; align-items: center; gap: 7px; padding: 7px; border-radius: 8px; font-size: .86rem; }
+      .choice:hover { background: #e9eee8; }
+      .choice input { accent-color: var(--accent-dark); }
+      .field-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+      .measure {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 164px;
+        align-items: center;
+        gap: 12px;
+        min-height: 66px;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 9px 11px;
+        background: #fff;
+      }
+      .measure-name { font-size: .88rem; font-weight: 700; overflow-wrap: anywhere; }
+      .measure-value { display: grid; grid-template-columns: 84px 72px; align-items: center; gap: 8px; min-height: 38px; }
+      .measure-value .item-only { grid-column: 1 / -1; }
+      .measure input { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; }
+      .measure small { color: var(--muted); }
+      @media (max-width: 480px) {
+        .measure { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+        .measure-value { grid-template-columns: minmax(0, 1fr) 72px; }
+      }
+      .rows { display: grid; gap: 7px; }
+      .entry-row { display: grid; grid-template-columns: minmax(120px,1fr) 80px 95px 38px; gap: 6px; }
+      .entry-row input,.entry-row select { width: 100%; min-width: 0; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 8px; }
+      .entry-row .entry-unit:disabled { color: var(--muted); opacity: 1; background: var(--paper); }
+      .entry-row button { border: 1px solid var(--line); background: #fff; border-radius: 8px; color: var(--bad); font-weight: 800; }
+      .entry-name-wrap { position: relative; min-width: 0; }
+      .entry-amount-wrap { grid-column: 2; min-width: 0; }
+      .entry-unit { grid-column: 3; }
+      .remove-entry { grid-column: 4; }
+      .has-fixed-amount .entry-amount-wrap { grid-column: 2 / 4; }
+      .entry-fixed-note {
+        display: flex;
+        align-items: center;
+        min-height: 42px;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+        color: var(--muted);
+        font-size: .82rem;
+      }
+      .entry-fixed-note[hidden] { display: none; }
+      .entry-name-wrap:focus-within { z-index: 30; }
+      .entry-suggestions {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        min-width: 100%;
+        width: max-content;
+        max-width: min(280px, 65vw);
+        max-height: 240px;
+        overflow-y: auto;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--paper);
+        box-shadow: var(--shadow);
+      }
+      .entry-suggestions[hidden] { display: none; }
+      .entry-row .entry-suggestions button {
+        display: block;
+        width: 100%;
+        padding: 8px 10px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--ink);
+        text-align: left;
+        font-weight: 500;
+      }
+      .entry-row .entry-suggestions button:hover, .entry-row .entry-suggestions button[aria-selected="true"] { background: var(--pale); }
+      .row-head {
+        font-size: .75rem;
+        color: var(--muted);
+        display: grid;
+        grid-template-columns: minmax(120px,1fr) 80px 95px 38px;
+        gap: 6px;
+        margin-bottom: 5px;
+      }
+      .hint { font-size: .83rem; color: var(--muted); margin: 6px 0; }
+      .quiz-actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 17px; }
+      .feedback { border-radius: 12px; padding: 14px 16px; margin-top: 16px; font-weight: 650; }
+      .feedback.good { background: #e6f1e9; color: var(--good); }
+      .feedback.bad { background: var(--rose); color: var(--bad); }
+      .answer { margin-top: 10px; font-size: .88rem; font-weight: 500; color: var(--ink); }
+      .answer ol { margin: 6px 0 0; padding-left: 20px; }
+      .score { font-weight: 800; color: var(--accent-dark); }
+      @media(max-width:760px) {
+        :root { --header-height: 60px; }
+        main.wrap { width: calc(100% - 74px); margin-right: 62px; }
+        .jump { right: 6px; width: 44px; padding: 5px; gap: 5px; }
+        .jump a { width: 32px; height: 32px; font-size: .8rem; }
+        .finder input { min-width: 0; width: 100%; }
+        .drinks,.choice-grid,.field-grid { grid-template-columns: 1fr; }
+        .section-card { padding: 18px; }
+        .hero { padding-top: 42px; }
+        .entry-row,.row-head { grid-template-columns: minmax(90px,1fr) 65px 70px 30px; }
+        .entry-row input,.entry-row select { font-size: .82rem; padding: 6px; }
+        .row-head { font-size: .65rem; }
+        .quiz-shell { padding: 18px; }
+        .top-inner { min-height: 60px; }
+      }
+      .action-row { display: grid; grid-template-columns: minmax(170px,1fr) 36px 36px 36px; gap: 6px; }
+      .action-row select,.action-row button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 8px; }
+      .action-row button { font-weight: 800; color: var(--accent-dark); }
+      .action-row .remove-action { color: var(--bad); }
+      .action-row button:hover { background: var(--pale); }
+      .feedback-details { margin: 9px 0 0; padding-left: 22px; font-weight: 500; }
+      .feedback-details li { margin: 4px 0; }
+      @media (max-aspect-ratio: 4/3) {
+        main.wrap { width: min(1120px, calc(100% - 36px)); margin: auto; padding-top: 54px; }
+        .jump {
+          top: var(--header-height);
+          left: 0;
+          right: 0;
+          transform: none;
+          flex-direction: row;
+          width: 100%;
+          max-height: none;
+          gap: 6px;
+          padding: 8px 12px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          border-radius: 0;
+        }
+        .jump a { width: 32px; height: 32px; font-size: .8rem; }
+        .jump a:first-child { margin-left: auto; }
+        .jump a:last-child { margin-right: auto; }
+        section { scroll-margin-top: calc(var(--header-height) + 68px); }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="wrap top-inner">
+        <a class="brand" href="#home">
+          Barista
+          <small>Recipe study guide</small>
+        </a>
+        <nav class="topnav" aria-label="Main navigation">
+          <a href="#home">Home</a>
+          <a href="#quiz">Quiz</a>
+        </nav>
+      </div>
+    </header>
+    <main class="wrap">
+      <section id="home" class="hero">
+        <h1>Barista Training Guide</h1>
+        <p>This page is a sample of a barista training application made by Cody Cuento to practice memorizing boba recipes. This sample does not contain real recipe data and is not affiliated with any real cafe or brand.</p>
+        <div class="summary">
+          <span class="pill" id="drink-count"></span>
+          <span class="pill">A–E · 5 recipes</span>
+        </div>
+      </section>
+      <section id="recipes" aria-label="Drink recipes">
+        <div class="finder">
+          <input id="search" type="search" placeholder="Search by drink name, code, or ingredient" aria-label="Search recipes">
+          <nav class="jump" aria-label="Jump to category"></nav>
+        </div>
+        <div id="recipe-sections"></div>
+      </section>
+      <section id="quiz">
+        <div class="quiz-shell">
+          <div class="eyebrow">Practice</div>
+          <h2>Quiz mode</h2>
+          <p>Choose a mode, then build your memory one drink at a time. Answers are graded as soon as you submit them.</p>
+          <div class="mode-row" role="group" aria-label="Quiz difficulty">
+            <button type="button" data-mode="easy" aria-pressed="true">Easy · toppings</button>
+            <button type="button" data-mode="medium" aria-pressed="false">Medium · amounts</button>
+            <button type="button" data-mode="hard" aria-pressed="false">Hard · full recipe</button>
+          </div>
+          <div class="quiz-top">
+            <span id="quiz-progress"></span>
+            <span class="score" id="quiz-score"></span>
+          </div>
+          <div class="prompt" id="quiz-prompt"></div>
+          <div id="quiz-question"></div>
+          <div class="quiz-actions">
+            <button class="primary" id="check" type="button">Check answer</button>
+            <button class="secondary" id="next" type="button" hidden>Next drink</button>
+            <button class="secondary" id="skip" type="button">Skip</button>
+          </div>
+          <div id="feedback" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+    <script>
+      const item = (name, qty = '', unit = '', role = 'ingredient') => ({
+        name,
+        qty: String(qty),
+        unit,
+        role,
+      });
+      const T = (name, qty = '', unit = '') => item(name, qty, unit, 'topping');
+      const I = (name, qty = '', unit = '') => item(name, qty, unit);
+      const step = (label, items = [], method = '', position = 'drink', note = '') => ({
+        label,
+        items,
+        method,
+        position,
+        note,
+      });
+      const R = (code, name, steps) => ({
+        code,
+        name,
+        steps,
+        category: code[0],
+      });
+      const recipes = [
+        R('A', 'Boba Milk Tea', [
+          step('Add to cup', [
+            T('Boba', '1', 'sp'),
+          ], '', 'before'),
+          step('Shake', [
+            I('Ice', '1', 'cup'),
+            I('Milk tea', '1', 'cup'),
+            I('Brown sugar'),
+          ], 'shake'),
+        ]),
+        R('B', 'Black Tea', [
+          step('Shake', [
+            I('Ice', '1', 'cup'),
+            I('Black tea', '1', 'cup'),
+            I('Brown sugar'),
+          ], 'shake'),
+        ]),
+        R('C', 'Strawberry Milkshake', [
+          step('Add to cup', [
+            T('Strawberry', '1', 'sp'),
+            I('Brown sugar'),
+          ], '', 'before'),
+          step('Blend', [
+            I('Ice', '2', 'cup'),
+            I('Strawberry syrup', '2', 'pump'),
+            I('Strawberry', '1', 'sp'),
+            I('Whipping cream', '50', 'mL'),
+            I('Milk', '225', 'mL'),
+          ], 'blend'),
+        ]),
+        R('D', 'Fruit Slushy', [
+          step('Add to cup', [
+            T('Lychee jelly', '1', 'sp'),
+          ], '', 'before'),
+          step('Fill cup', [
+            I('Fruit Slushy', 'fill', ''),
+          ], '', '', 'Fill to the top of the cup.'),
+        ]),
+        R('E', 'House Thai Tea', [
+          step('Build in cup', [
+            I('Ice', '1', 'cup'),
+            I('Brown sugar'),
+            I('Whipping cream', '50', 'mL'),
+            I('Thai tea', 'fill to first or second line', ''),
+          ], '', '', 'Fill Thai tea to the first or second line.'),
+        ]),
+      ];
+      const sections = recipes.map(recipe => recipe.category);
+      const categoryNames = Object.fromEntries(recipes.map(recipe => [recipe.category, recipe.name]));
+      const toppingNames = [
+        'Aloe', 'Boba', 'Lychee jelly', 'Mango', 'Okinawa sugar', 'Cookie', 'Pudding', 'Sago',
+        'Strawberry',
+      ];
+      const ingredientNames = [
+        'Ice', 'Water', 'White sugar', 'Brown sugar', 'Okinawa sugar', 'Milk', 'Whipping cream',
+        'Yakult', 'Green tea', 'Black tea', 'Roasted tea', 'Milk tea', 'Cookie', 'Mango syrup',
+        'Strawberry syrup', 'Fruit Slushy', 'Evaporated milk', 'Condensed milk', 'Thai tea',
+        'Pudding', 'Sago', 'Matcha juice', 'Mango', 'Strawberry',
+      ];
+      const $ = selector => document.querySelector(selector);
+      const esc = value => String(value).replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[character]));
+      const amountText = item => item.qty
+        ? `${item.qty}${item.unit ? ' ' + item.unit : ''} ${item.name}`
+        : item.name;
+      const recipeItems = recipe => recipe.steps.flatMap(step => step.items);
+      const displayStep = step =>
+        `${step.label}${step.items.length ? ': ' + step.items.map(amountText).join(' + ') : ''}` +
+        `${step.method ? ' · ' + step.method : ''}${step.note ? ' · ' + step.note : ''}`;
+
+      function renderRecipes() {
+        const term = $('#search').value.trim().toLowerCase();
+        $('#drink-count').textContent = `${recipes.length} drinks`;
+        $('.jump').innerHTML = sections.map(category =>
+          `<a href="#cat-${category}" aria-label="Jump to ${esc(categoryNames[category])}" title="${esc(categoryNames[category])}">${category}</a>`
+        ).join('');
+        $('#recipe-sections').innerHTML = sections.map(category => {
+          const group = recipes.filter(recipe =>
+            recipe.category === category &&
+            (!term || [recipe.code, recipe.name, ...recipeItems(recipe).map(item => item.name)]
+              .join(' ').toLowerCase().includes(term))
+          );
+          if (!group.length) return '';
+          const cards = group.map(recipe => {
+            const steps = recipe.steps.map(step => {
+              const ingredients = step.items.length
+                ? ': ' + step.items.map(item => esc(amountText(item))).join(' + ')
+                : '';
+              const method = step.method
+                ? ` <span class="method">· ${esc(step.method)}</span>`
+                : '';
+              const note = step.note ? `<p class="note">${esc(step.note)}</p>` : '';
+              return `<li><div><span class="step-label">${esc(step.label)}</span>${ingredients}${method}${note}</div></li>`;
+            }).join('');
+            const title = esc(`${recipe.code} ${recipe.name}`);
+            return `<article class="drink" role="button" tabindex="0" aria-pressed="false" aria-label="Show recipe for ${title}" data-title="${title}">
+              <div class="flashcard-inner">
+                <div class="flashcard-face flashcard-front">
+                  <span class="code">${esc(recipe.code)}</span>
+                  <h3>${esc(recipe.name)}</h3>
+                  <p class="flip-hint">Click to reveal recipe</p>
+                </div>
+                <div class="flashcard-face flashcard-back" aria-hidden="true" inert>
+                  <ol class="steps">${steps}</ol>
+                  <p class="flip-hint">Click to return to the front</p>
+                </div>
+              </div>
+            </article>`;
+          }).join('');
+          const countLabel = group.length === 1 ? 'recipe' : 'recipes';
+          return `<section class="section-card" id="cat-${category}"><div class="section-head"><h2>${esc(categoryNames[category])}</h2><span>${group.length} ${countLabel}</span></div><div class="drinks">${cards}</div></section>`;
+        }).join('') || '<div class="empty">No drinks match that search.</div>';
+      }
+      $('#search').addEventListener('input', renderRecipes);
+      function flipCard(card) {
+        const flipped = card.classList.toggle('is-flipped');
+        card.setAttribute('aria-pressed', String(flipped));
+        card.setAttribute('aria-label', `${flipped ? 'Hide' : 'Show'} recipe for ${card.dataset.title}`);
+        const front = card.querySelector('.flashcard-front');
+        const back = card.querySelector('.flashcard-back');
+        front.setAttribute('aria-hidden', String(flipped));
+        back.setAttribute('aria-hidden', String(!flipped));
+        front.toggleAttribute('inert', flipped);
+        back.toggleAttribute('inert', !flipped);
+      }
+      $('#recipe-sections').addEventListener('click', event => {
+        const card = event.target.closest('.drink');
+        if (card) flipCard(card);
+      });
+      $('#recipe-sections').addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const card = event.target.closest('.drink');
+        if (card) {
+          event.preventDefault();
+          flipCard(card);
+        }
+      });
+      renderRecipes();
+
+      const quiz = {
+        mode: 'easy',
+        deck: [],
+        index: 0,
+        round: 1,
+        attempts: 0,
+        correct: 0,
+        answered: 0,
+        locked: false,
+      };
+      function shuffled(previousCode = '') {
+        const deck = [...recipes];
+        for (let index = deck.length - 1; index > 0; index--) {
+          const swapIndex = Math.floor(Math.random() * (index + 1));
+          [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
+        }
+        // Avoid repeating the last drink immediately at a round boundary.
+        if (deck.length > 1 && deck[0].code === previousCode) {
+          const swapIndex = 1 + Math.floor(Math.random() * (deck.length - 1));
+          [deck[0], deck[swapIndex]] = [deck[swapIndex], deck[0]];
+        }
+        return deck;
+      }
+      function current() { return quiz.deck[quiz.index]; }
+      function expected(recipe, role) {
+        return recipeItems(recipe).filter(item => item.role === role);
+      }
+      const actionOptions = [
+        ['topping', 'Add toppings'],
+        ['shake', 'Shake'],
+        ['blend', 'Blend'],
+        ['pulse', 'Pulse'],
+        ['filter', 'Filter'],
+        ['build', 'Build in cup'],
+        ['fill', 'Fill cup'],
+      ];
+      function actionSequence(r) {
+        const hasTool = r.steps.some(s=>s.method);
+        const actions = [];
+        for (const s of r.steps) {
+          if (s.position === 'before' && s.items.some(x => x.role === 'topping')) {
+            actions.push('topping');
+          }
+          if (s.method) {
+            actions.push(s.method);
+          } else if (!hasTool && s.items.some(x => x.role === 'ingredient')) {
+            actions.push(s.label.toLowerCase().includes('fill') ? 'fill' : 'build');
+          }
+          if (s.position === 'after' && s.items.some(x => x.role === 'topping')) {
+            actions.push('topping');
+          }
+        }
+        return actions;
+      }
+      function start(mode) {
+        if (quiz.deck.length && quiz.mode === mode) return;
+        quiz.mode = mode;
+        if (!quiz.deck.length) quiz.deck = shuffled();
+        document.querySelectorAll('[data-mode]').forEach(button =>
+          button.setAttribute('aria-pressed', button.dataset.mode === mode)
+        );
+        renderQuestion();
+      }
+      function renderQuestion() {
+        if (quiz.index >= quiz.deck.length) {
+          const previousCode = quiz.deck[quiz.deck.length - 1]?.code;
+          quiz.deck = shuffled(previousCode);
+          quiz.index = 0;
+          quiz.round++;
+        }
+        quiz.attempts = 0;
+        quiz.locked = false;
+        const r = current(), ings = expected(r, 'ingredient');
+        $('#quiz-progress').textContent = `Round ${quiz.round} · Drink ${quiz.index + 1} of ${quiz.deck.length} · ${quiz.mode[0].toUpperCase() + quiz.mode.slice(1)}`;
+        $('#quiz-score').textContent = `${quiz.correct} correct / ${quiz.answered} graded`;
+        $('#quiz-prompt').innerHTML = `<span class="code">${esc(r.code)}</span>${esc(r.name)}`;
+        $('#check').hidden = false;
+        $('#next').hidden = true;
+        $('#skip').hidden = false;
+        $('#feedback').innerHTML = '';
+        if (quiz.mode === 'easy') {
+          const hint = ings.length ? ings.map(amountText).join(' · ') : 'No drink ingredients listed.';
+          $('#quiz-question').innerHTML=`<div class="question"><h4>Which toppings go directly into the cup?</h4><p class="hint">Drink ingredients: ${esc(hint)}</p><p class="hint">Select all that apply. Leave every box empty if there are no cup toppings.</p><div class="choice-grid">${toppingNames.map((n,k)=>`<label class="choice"><input type="checkbox" value="${esc(n)}" id="top-${k}">${esc(n)}</label>`).join('')}</div></div>`;
+        } else if (quiz.mode === 'medium') {
+          const toppings = expected(r, 'topping');
+          $('#quiz-question').innerHTML = `<div class="question">
+            <h4>Enter the exact amounts for the ingredients and toppings.</h4>
+            <p class="hint">Units are shown. “Fill” and “item only” entries need no quantity input. You have two tries.</p>
+            <h4>Drink ingredients</h4>
+            <div class="field-grid">${mediumFields(ings, 'm')}</div>
+            <h4>Cup toppings</h4>
+            <div class="field-grid">${toppings.length ? mediumFields(toppings, 't') : '<p class="hint">No cup toppings.</p>'}</div>
+          </div>`;
+        } else {
+          $('#quiz-question').innerHTML=`<div class="question"><h4>Build the full recipe from memory.</h4><p class="hint">Add every drink ingredient and every cup topping. Ingredient order does not matter. Fill and item-only entries show a fixed instruction instead of an amount input.</p><div><strong>Drink ingredients</strong><div class="row-head"><span>Ingredient</span><span>Amount</span><span>Unit</span><span></span></div><div class="rows" id="ingredient-rows"></div><button type="button" class="add" id="add-ingredient">+ Ingredient</button></div><div style="margin-top:18px"><strong>Cup toppings</strong><div class="row-head"><span>Topping</span><span>Amount</span><span>Unit</span><span></span></div><div class="rows" id="topping-rows"></div><button type="button" class="add" id="add-topping">+ Topping</button></div><div style="margin-top:18px"><strong>Tool / action order</strong><p class="hint">Add actions from the list, then use ↑ and ↓ to put them in recipe order. Place “Add toppings” where the recipe calls for them. You have two tries.</p><div class="rows" id="action-rows"></div><button type="button" class="add" id="add-action">+ Action</button></div></div>`;
+          $('#add-ingredient').onclick = () => addRow('ingredient');
+          $('#add-topping').onclick = () => addRow('topping');
+          $('#add-action').onclick = addActionRow;
+          addRow('ingredient');
+          addRow('topping');
+          addActionRow();
+        }
+      }
+      function quantityRequired(item) {
+        return Boolean(item.qty) && !item.qty.toLowerCase().startsWith('fill');
+      }
+      function mediumFields(items, prefix) {
+        return items.map((item, index) => {
+          if (!quantityRequired(item)) {
+            const instruction = item.qty || 'Item only';
+            return `<div class="measure">
+              <span class="measure-name">${esc(item.name)}</span>
+              <div class="measure-value"><small class="item-only">${esc(instruction)}</small></div>
+            </div>`;
+          }
+          const id = `${prefix}-${index}`;
+          return `<div class="measure">
+            <label class="measure-name" for="${id}">${esc(item.name)}</label>
+            <div class="measure-value">
+              <input id="${id}" autocomplete="off" inputmode="decimal" aria-label="Amount of ${esc(item.name)}">
+              <small> ${esc(item.unit)}</small>
+            </div>
+          </div>`;
+        }).join('');
+      }
+      function allowedUnits(name, role) {
+        const normalized = normName(name);
+        if (normalized === 'milk') return ['mL', 'cup'];
+        const matching = recipes.flatMap(recipeItems).filter(item => normName(item.name) === normalized);
+        const inRole = matching.filter(item => item.role === role);
+        const items = inRole.length ? inRole : matching;
+        return [...new Set(items.map(item => item.unit).filter(Boolean))];
+      }
+      function updateRowUnits(row) {
+        const name = row.querySelector('.entry-name').value.trim();
+        const amount = row.querySelector('.entry-amount');
+        const unit = row.querySelector('.entry-unit');
+        const note = row.querySelector('.entry-fixed-note');
+        const recipe = current();
+        const localItems = recipe ? expected(recipe, row.dataset.role)
+          .filter(item => normName(item.name) === normName(name)) : [];
+        const menuItems = recipes.flatMap(recipeItems)
+          .filter(item => item.role === row.dataset.role && normName(item.name) === normName(name));
+        const items = localItems.length ? localItems : menuItems;
+        const sugar = ['brown sugar', 'white sugar'].includes(normName(name));
+        const fixed = sugar || (items.length > 0 && items.every(item => !quantityRequired(item)));
+        amount.hidden = fixed;
+        amount.disabled = fixed;
+        note.hidden = !fixed;
+        unit.hidden = fixed;
+        row.classList.toggle('has-fixed-amount', fixed);
+        if (fixed) {
+          amount.value = sugar ? '' : items[0].qty;
+          note.textContent = amount.value || 'Item only';
+          unit.innerHTML = '<option value=""></option>';
+          unit.value = '';
+          unit.disabled = true;
+          row.dataset.fixedAmount = 'true';
+          return;
+        }
+        if (row.dataset.fixedAmount) {
+          amount.value = '';
+          delete row.dataset.fixedAmount;
+        }
+        const previous = unit.value;
+        const options = allowedUnits(name, row.dataset.role);
+        if (!name || !options.length) {
+          const label = !name ? 'Choose item' : '—';
+          unit.innerHTML = `<option value="">${label}</option>`;
+          unit.disabled = true;
+        } else {
+          unit.innerHTML = options.map(value =>
+            `<option value="${value}">${esc(value)}</option>`
+          ).join('');
+          unit.value = options.includes(previous) ? previous : options[0];
+          unit.disabled = options.length === 1;
+        }
+      }
+      let entryRowId = 0;
+      function matchingNames(names, query) {
+        const term = query.toLowerCase().trim();
+        return names.filter(name =>
+          name.toLowerCase().includes(term) || normName(name).includes(normName(term)) ||
+          Object.entries(alias).some(([alternate, canonical]) =>
+            canonical === normName(name) && alternate.includes(term)
+          )
+        );
+      }
+      function attachSuggestions(row, names) {
+        const input = row.querySelector('.entry-name');
+        const menu = row.querySelector('.entry-suggestions');
+        let matches = [];
+        let active = -1;
+        function close() {
+          menu.hidden = true;
+          input.setAttribute('aria-expanded', 'false');
+          input.removeAttribute('aria-activedescendant');
+          active = -1;
+        }
+        function choose(index) {
+          if (!matches[index]) return;
+          input.value = matches[index];
+          updateRowUnits(row);
+          close();
+        }
+        function refresh() {
+          matches = matchingNames(names, input.value);
+          active = -1;
+          input.removeAttribute('aria-activedescendant');
+          menu.innerHTML = matches.map((name, index) =>
+            `<button type="button" tabindex="-1" role="option" id="${menu.id}-${index}" data-index="${index}" aria-selected="false">${esc(name)}</button>`
+          ).join('');
+          menu.hidden = !matches.length;
+          input.setAttribute('aria-expanded', String(matches.length > 0));
+        }
+        input.addEventListener('input', () => {
+          updateRowUnits(row);
+          refresh();
+        });
+        input.addEventListener('focus', refresh);
+        input.addEventListener('blur', close);
+        input.addEventListener('keydown', event => {
+          if (event.key === 'Escape') {
+            close();
+          } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            if (menu.hidden) refresh();
+            if (!matches.length) return;
+            active = event.key === 'ArrowDown'
+              ? (active + 1) % matches.length
+              : (active <= 0 ? matches.length - 1 : active - 1);
+            [...menu.children].forEach((option, index) =>
+              option.setAttribute('aria-selected', String(index === active))
+            );
+            input.setAttribute('aria-activedescendant', menu.children[active].id);
+            menu.children[active].scrollIntoView({block: 'nearest'});
+          } else if (event.key === 'Enter' && !menu.hidden && active >= 0) {
+            event.preventDefault();
+            choose(active);
+          }
+        });
+        // Keep focus in the text field while selecting with a mouse or touch.
+        menu.addEventListener('pointerdown', event => event.preventDefault());
+        menu.addEventListener('click', event => {
+          const option = event.target.closest('[data-index]');
+          if (option) choose(Number(option.dataset.index));
+        });
+      }
+      function addRow(role) {
+        const target = role === 'ingredient' ? '#ingredient-rows' : '#topping-rows';
+        const row = document.createElement('div');
+        row.className = 'entry-row';
+        row.dataset.role = role;
+        const suggestionId = `suggestions-${++entryRowId}`;
+        row.innerHTML = `<div class="entry-name-wrap">
+          <input class="entry-name" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${suggestionId}" autocomplete="off" aria-label="${role} name" placeholder="Name">
+          <div class="entry-suggestions" id="${suggestionId}" role="listbox" aria-label="${role} suggestions" hidden></div>
+        </div>
+        <div class="entry-amount-wrap">
+          <input class="entry-amount" aria-label="Amount" placeholder="Amount">
+          <span class="entry-fixed-note" hidden></span>
+        </div>
+        <select class="entry-unit" aria-label="Unit" disabled><option value="">Choose item</option></select>
+        <button class="remove-entry" type="button" aria-label="Remove row">×</button>`;
+        attachSuggestions(row, role === 'ingredient' ? ingredientNames : toppingNames);
+        row.querySelector('.entry-name').addEventListener('change', () => updateRowUnits(row));
+        row.querySelector('.entry-amount').addEventListener('input', () => updateRowUnits(row));
+        row.querySelector('.remove-entry').onclick = () => row.remove();
+        $(target).appendChild(row);
+      }
+      function addActionRow() {
+        const row = document.createElement('div');
+        row.className = 'action-row';
+        row.innerHTML=`<select class="action-choice" aria-label="Tool or action"><option value="">Choose an action</option>${actionOptions.map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</select><button type="button" class="move-up" aria-label="Move action up">↑</button><button type="button" class="move-down" aria-label="Move action down">↓</button><button type="button" class="remove-action" aria-label="Remove action">×</button>`;
+        row.querySelector('.move-up').onclick = () => {
+          if (row.previousElementSibling) row.previousElementSibling.before(row);
+        };
+        row.querySelector('.move-down').onclick = () => {
+          if (row.nextElementSibling) row.nextElementSibling.after(row);
+        };
+        row.querySelector('.remove-action').onclick = () => row.remove();
+        $('#action-rows').appendChild(row);
+      }
+      const alias = {
+        'oolong tea': 'roasted tea',
+        'egg pudding': 'pudding',
+      };
+      function normName(value) {
+        const name = String(value).toLowerCase().trim().replace(/[-_]/g, ' ').replace(/\s+/g, ' ');
+        return alias[name] || name;
+      }
+      function normQty(value) {
+        const quantity = String(value).toLowerCase().trim().replace(/\s+/g, ' ');
+        if (quantity === '½' || quantity === '1/2') return '0.5';
+        if (quantity === '¾' || quantity === '3/4') return '0.75';
+        if (/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(quantity)) return String(Number(quantity));
+        if (['to top', 'fill to top', 'fill to the top'].includes(quantity)) return 'fill';
+        return quantity;
+      }
+      function qtyOK(actual, want) {
+        const a = normQty(actual), w = normQty(want);
+        if (!w) return true;
+        if (w.startsWith('fill to first or second line')) {
+          return ['fill', 'fill to first line', 'fill to second line', 'first line', 'second line', 'fill to first or second line'].includes(a);
+        }
+        return a === w;
+      }
+      function normUnit(unit) {
+        const normalized = String(unit).toLowerCase().trim();
+        return {
+          cups: 'cup', ml: 'ml', spoon: 'sp', spoonful: 'sp', spoons: 'sp',
+          pumps: 'pump', pieces: 'piece',
+        }[normalized] || normalized;
+      }
+      function unitOK(actual, want) {
+        return normUnit(actual) === normUnit(want);
+      }
+      function amountOnly(item) {
+        return item.qty ? `${item.qty}${item.unit ? ' ' + item.unit : ''}` : 'item only';
+      }
+      function itemProblems(actual, wanted, label) {
+        const pool = [...actual], problems = [];
+        for (const w of wanted) {
+          const sameName = a => normName(a.name) === normName(w.name);
+          let k = pool.findIndex(a => sameName(a) && qtyOK(a.qty, w.qty) && (!w.qty || unitOK(a.unit, w.unit)));
+          if (k >= 0) {
+            pool.splice(k, 1);
+            continue;
+          }
+          k = pool.findIndex(sameName);
+          if (k < 0) {
+            problems.push(`${label} missing: ${w.name} (${amountOnly(w)})`);
+            continue;
+          }
+          const a = pool.splice(k, 1)[0];
+          if (!qtyOK(a.qty, w.qty)) problems.push(`${w.name} amount: entered ${a.qty || 'blank'}; expected ${w.qty}`);
+          if (w.qty && !unitOK(a.unit, w.unit)) problems.push(`${w.name} unit: entered ${a.unit || 'none'}; expected ${w.unit || 'none'}`);
+        }
+        for (const a of pool) {
+          problems.push(`${label} extra: ${a.name}${a.qty ? ' (' + amountOnly(a) + ')' : ''}`);
+        }
+        return problems;
+      }
+      function actionProblems(actual, wanted) {
+        const label = value => actionOptions.find(([code]) => code === value)?.[1] || 'none';
+        const problems = [];
+        for (let k = 0; k < Math.max(actual.length, wanted.length); k++) {
+          if (actual[k] !== wanted[k]) {
+            problems.push(`Action ${k + 1}: chose ${label(actual[k])}; expected ${label(wanted[k])}`);
+          }
+        }
+        return problems;
+      }
+      function submittedRows(role) {
+        return [...document.querySelectorAll(`#${role}-rows .entry-row`)]
+          .map(row => ({
+            name: row.querySelector('.entry-name').value,
+            qty: row.querySelector('.entry-amount').value,
+            unit: row.querySelector('.entry-unit').value,
+          }))
+          .filter(item => item.name.trim());
+      }
+      function submittedActions() {
+        return [...document.querySelectorAll('#action-rows .action-choice')].map(choice => choice.value);
+      }
+      function grade() {
+        if (quiz.locked) return;
+        const r = current();
+        let wrong = [];
+        if (quiz.mode === 'easy') {
+          const selected = [...document.querySelectorAll('.choice input:checked')].map(x=>normName(x.value)).sort();
+          const wanted = [...new Set(expected(r,'topping').map(x=>normName(x.name)))].sort();
+          const names = items=>items.map(n=>toppingNames.find(x=>normName(x)===n)||n).join(', ');
+          const missing = wanted.filter(n=>!selected.includes(n)),extra=selected.filter(n=>!wanted.includes(n));
+          if (missing.length) wrong.push(`Missing toppings: ${names(missing)}`);
+          if (extra.length) wrong.push(`Extra toppings: ${names(extra)}`);
+        } else if (quiz.mode === 'medium') {
+          [['ingredient', 'm'], ['topping', 't']].forEach(([role, prefix]) => {
+            expected(r, role).forEach((item, index) => {
+              if (!quantityRequired(item)) return;
+              const entered = $(`#${prefix}-${index}`).value;
+              if (!qtyOK(entered, item.qty)) {
+                wrong.push(`${item.name}: entered ${entered || 'blank'}; expected ${amountOnly(item)}`);
+              }
+            });
+          });
+        } else {
+          wrong.push(...itemProblems(submittedRows('ingredient'),expected(r,'ingredient'),'Ingredient'));
+          wrong.push(...itemProblems(submittedRows('topping'),expected(r,'topping'),'Topping'));
+          wrong.push(...actionProblems(submittedActions(),actionSequence(r)));
+        }
+        quiz.attempts++;
+        if (!wrong.length) {
+          quiz.correct++;
+          quiz.answered++;
+          quiz.locked = true;
+          showFeedback('good', 'Correct. Well done.');
+          finishQuestion();
+          return;
+        }
+        const max = quiz.mode === 'easy' ? 1 : 2;
+        if (quiz.attempts < max) {
+          showFeedback('bad', 'Try again. Review these entries:', false, wrong);
+          return;
+        }
+        quiz.answered++;
+        quiz.locked = true;
+        showFeedback('bad', 'Incorrect. Here is where the answer differed:', true, wrong);
+        finishQuestion();
+      }
+      function showFeedback(kind,message,showAnswer=false,details=[]){
+        const r = current();
+        $('#feedback').innerHTML=`<div class="feedback ${kind}">${esc(message)}${details.length?`<ul class="feedback-details">${details.map(d=>`<li>${esc(d)}</li>`).join('')}</ul>`:''}${showAnswer?`<div class="answer"><strong>Correct recipe</strong><ol>${r.steps.map(s=>`<li>${esc(displayStep(s))}</li>`).join('')}</ol><p><strong>Action order:</strong> ${esc(actionSequence(r).map(code=>actionOptions.find(([value])=>value===code)?.[1]||code).join(' → '))}</p></div>`:''}</div>`;
+      }
+      function finishQuestion() {
+        $('#quiz-score').textContent = `${quiz.correct} correct / ${quiz.answered} graded`;
+        $('#check').hidden = true;
+        $('#next').hidden = false;
+        $('#skip').hidden = true;
+      }
+      function next() {
+        quiz.index++;
+        renderQuestion();
+      }
+      $('#check').onclick = grade;
+      $('#next').onclick = next;
+      $('#skip').onclick = next;
+      document.querySelectorAll('[data-mode]').forEach(button => {
+        button.onclick = () => start(button.dataset.mode);
+      });
+      start('easy');
+    </script>
+  </body>
+</html>
